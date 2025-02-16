@@ -7,22 +7,7 @@ const ISSUANCE_DB = './db/issuance.json';
 require_once './book.php';
 require_once './member.php';
 require_once './issuance.php';
-
-function loadDB($db)
-{
-    if (!file_exists($db)) {
-        file_put_contents($db, json_encode([]));
-    }
-    return json_decode(file_get_contents($db), true);
-}
-
-function saveToDB($db, $list)
-{
-    file_put_contents($db, json_encode($list, JSON_PRETTY_PRINT));
-}
-
-
-
+require_once './utils.php';
 
 class Library
 {
@@ -93,9 +78,19 @@ class Library
         echo "\n";
     }
 
+    public function showIssuances($issuances = null)
+    {
+        $issuancesToShow = $issuances ?? $this->issuances;
+        Issuance::showHead();
+        foreach ($issuancesToShow as $index => $issuance) {
+            $issuance->show($index + 1);
+        }
+        echo "\n";
+    }
+
     public function getBooks($bookName)
     {
-        return  array_values(array_filter($this->books, fn($book) => strpos($book->title, $bookName) !== false));
+        return  array_values(array_filter($this->books, fn($book) => strpos(strtolower($book->title), strtolower($bookName)) !== false));
     }
 
     public function isBookExists($bookId)
@@ -105,7 +100,7 @@ class Library
 
     public function getMembers($memberName)
     {
-        return  array_values(array_filter($this->members, fn($member) => strpos($member->name, $memberName) !== false));
+        return  array_values(array_filter($this->members, fn($member) => strpos(strtolower($member->name), strtolower($memberName)) !== false));
     }
 
     public function isMemberExists($memberId)
@@ -113,12 +108,12 @@ class Library
         return array_search($memberId, array_column($this->members, 'id')) !== false;
     }
 
-    public function getIssuances($memberId = null, $bookId = null, $status = 'ISSUED')
+    public function getIssuances($memberId = null, $bookId = null, $status = null)
     {
         $getQuery = function ($issuance) use ($memberId, $bookId, $status) {
             return (!$memberId || $issuance->memberId === $memberId)
                 && (!$bookId || $issuance->bookId === $bookId) &&
-                ($issuance->status === $status);
+                (!$status || $issuance->status === $status);
         };
 
         return array_values(
@@ -126,17 +121,14 @@ class Library
         );
     }
 
-    public function showIssuances($issuances = null)
+    public function getFees($issuanceIds)
     {
-        $issuancesToShow = $issuances ?? $this->issuances;
-        Issuance::showHead();
-        foreach ($issuancesToShow as $index => $issuance) {
-            $issuance->show($index + 1);
-            echo "\n";
+        $fees = [];
+        foreach ($this->issuances as $issuance) {
+            if (array_search($issuance->id, $issuanceIds) !== false) {
+                $fees[$issuance->id] = $issuance->calculateFees();
+            }
         }
+        return $fees;
     }
 }
-
-$library =  new Library();
-
-return $library;

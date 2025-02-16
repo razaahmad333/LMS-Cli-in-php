@@ -21,12 +21,12 @@ class Book
 
     public static function showHead()
     {
-        printf("\e[1;32m%-15s %-20s %-20s\e[0m\n", "Sr. Book Id", "Title", "Author");
+        printf("\e[1;32m%-15s %-40s %-20s\e[0m\n", "Sr. Book Id", "Title", "Author");
     }
     
     public function show($sr)
     {
-        printf("%-15s %-20s %-20s\n", $sr.".  ".$this->id, $this->title, $this->author);
+        printf("%-15s %-40s %-20s\n", $sr.".  ".$this->id, $this->title, $this->author);
     }
 
     public static function toBook($bookData)
